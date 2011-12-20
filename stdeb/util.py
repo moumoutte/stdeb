@@ -124,6 +124,7 @@ stdeb_cfg_options = [
     ('replaces=',None,'debian/control Replaces:'),
     ('mime-desktop-files=',None,'MIME desktop files'),
     ('mime-file=',None,'MIME file'),
+    ('init-files=', None, 'INIT file'),
     ('shared-mime-file=',None,'shared MIME file'),
     ('setup-env-vars=',None,'environment variables passed to setup.py'),
     ('udev-rules=',None,'file with rules to install to udev'),
@@ -685,6 +686,10 @@ class DebianInfo:
                 if value:
                     if not cfg.has_section(module_name):
                         cfg.add_section(module_name)
+		    if list(value) == value:
+			    tmp_val = ', '.join(value)
+			    value = tmp_val
+
                     cfg.set(module_name, opt_name, value)
 
         self.stdeb_version = __stdeb_version__
@@ -751,6 +756,13 @@ class DebianInfo:
         self.mime_file = parse_val(cfg,module_name,'MIME-File')
 
         self.shared_mime_file = parse_val(cfg,module_name,'Shared-MIME-File')
+
+	self.init_files = parse_vals(cfg, module_name, 'INIT-Files')
+	if self.init_files:
+		need_custom_binary_target = True
+		self.dh_installinit_indep_line = '\tdh_installinit'
+	else:
+		self.dh_installinit_indep_line = ''
 
         if self.mime_file == '' and self.shared_mime_file == '':
             self.dh_installmime_indep_line = ''
@@ -1189,11 +1201,24 @@ def build_dsc(debinfo,
         link_func(fname,
                   os.path.join(debian_dir,'%s.udev'%debinfo.package))
 
-    #    J. debian/source/format
+    def extract_name(path):
+	    l = path.rsplit(os.path.sep, 2)
+	    res = l[-1] or l[-2]
+	    return res
+
+    #    J. debian/package.*.init
+    if debinfo.init_files:
+        for init in debinfo.init_files:
+            if not os.path.exists(init):
+                raise ValueError('init file specified, but does not exist (%s)' % init)
+            link_func(init, os.path.join(debian_dir, '%s.%s.init' % (debinfo.package, extract_name(init))))
+
+    #    K. debian/source/format
     os.mkdir(os.path.join(debian_dir,'source'))
     fd = open( os.path.join(debian_dir,'source','format'), mode='w')
     fd.write('1.0\n')
     fd.close()
+
 
     if debian_dir_only:
         return
@@ -1338,6 +1363,7 @@ binary-indep: build
 %(dh_binary_indep_lines)s
 %(dh_installmime_indep_line)s
 %(dh_desktop_indep_line)s
+%(dh_installinit_indep_line)s
 """
 
 PREINST = """#! /bin/sh
