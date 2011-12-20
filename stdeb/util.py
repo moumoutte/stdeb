@@ -66,15 +66,16 @@ stdeb_cmdline_opts = [
     ('ignore-install-requires', 'i',
      'ignore the requirements from requires.txt in the egg-info directory'),
     ('pycentral-backwards-compatibility=',None,
-     'If True, enable migration from old stdeb that used pycentral. (Default=False).'),
+     'If True (currently the default), enable migration from old stdeb '
+     'that used pycentral'),
     ('workaround-548392=',None,
-     'If True, limit binary package to single Python version, '
-     'working around Debian bug 548392 of debhelper. (Default=False).'),
+     'If True (currently the default), limit binary package to single Python '
+     'version, working around Debian bug 548392 of debhelper'),
     ('force-buildsystem=',None,
      "If True (the default), set 'DH_OPTIONS=--buildsystem=python_distutils'"),
     ('no-backwards-compatibility',None,
-     'This option has no effect, is here for backwards compatibility, and may '
-     'be removed someday.'),
+     'If True, set --pycentral-backwards-compatibility=False and '
+     '--workaround-548392=False. (Default=False).'),
     ('guess-conflicts-provides-replaces=',None,
      'If True, attempt to guess Conflicts/Provides/Replaces in debian/control '
      'based on apt-cache output. (Default=False).'),
@@ -678,13 +679,13 @@ class DebianInfo:
             # Allow distutils commands to override config files (this lets
             # command line options beat file options).
             for longopt, shortopt, desc in stdeb_cfg_options:
-                name = longopt[:-1]
-                name = name.replace('-','_')
-                value = getattr( sdist_dsc_command, name )
-                if value is not None:
+                opt_name = longopt[:-1]
+                name = opt_name.replace('-','_')
+                value = getattr(sdist_dsc_command, name) or getattr(sdist_dsc_command.distribution, name, None)
+                if value:
                     if not cfg.has_section(module_name):
                         cfg.add_section(module_name)
-                    cfg.set( module_name, name, value )
+                    cfg.set(module_name, opt_name, value)
 
         self.stdeb_version = __stdeb_version__
         self.module_name = module_name
