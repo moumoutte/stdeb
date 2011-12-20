@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 #import stdeb.command
 #import stdeb.command.sdist_dsc
 
