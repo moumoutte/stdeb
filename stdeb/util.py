@@ -757,12 +757,13 @@ class DebianInfo:
 
         self.shared_mime_file = parse_val(cfg,module_name,'Shared-MIME-File')
 
-	self.init_files = parse_vals(cfg, module_name, 'INIT-Files')
-	if self.init_files:
-		need_custom_binary_target = True
-		self.dh_installinit_indep_line = '\tdh_installinit'
-	else:
-		self.dh_installinit_indep_line = ''
+        self.init_files = parse_vals(cfg, module_name, 'INIT-Files')
+
+        if self.init_files:
+            need_custom_binary_target = True
+            self.dh_installinit_indep_line = '\tdh_installinit'
+        else:
+            self.dh_installinit_indep_line = ''
 
         if self.mime_file == '' and self.shared_mime_file == '':
             self.dh_installmime_indep_line = ''
