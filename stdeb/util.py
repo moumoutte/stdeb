@@ -624,6 +624,12 @@ def check_cfg_files(cfg_files,module_name):
         log.warn('configuration files were specified, but no options were '
                  'found in "%s" or "DEFAULT" sections.' % (module_name,) )
 
+
+def extract_name(path):
+    l = path.rsplit(os.path.sep, 2)
+    res = l[-1] or l[-2]
+    return res
+
 class DebianInfo:
     """encapsulate information for Debian distribution system"""
     def __init__(self,
@@ -759,11 +765,11 @@ class DebianInfo:
 
         self.init_files = parse_vals(cfg, module_name, 'INIT-Files')
 
+        self.dh_installinit_indep_line = ''
         if self.init_files:
             need_custom_binary_target = True
-            self.dh_installinit_indep_line = '\tdh_installinit'
-        else:
-            self.dh_installinit_indep_line = ''
+            for f in self.init_files:
+                self.dh_installinit_indep_line += '\tdh_installinit --name=%s\n' % extract_name(f)
 
         if self.mime_file == '' and self.shared_mime_file == '':
             self.dh_installmime_indep_line = ''
@@ -1202,10 +1208,6 @@ def build_dsc(debinfo,
         link_func(fname,
                   os.path.join(debian_dir,'%s.udev'%debinfo.package))
 
-    def extract_name(path):
-	    l = path.rsplit(os.path.sep, 2)
-	    res = l[-1] or l[-2]
-	    return res
 
     #    J. debian/package.*.init
     if debinfo.init_files:
