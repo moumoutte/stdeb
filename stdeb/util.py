@@ -993,11 +993,11 @@ XB-Python-Version: ${python:Versions}
             if self.architecture == 'all':
                 self.binary_target_lines = ( \
                     RULES_BINARY_ALL_TARGET%self.__dict__ + \
-                    RULES_BINARY_INDEP_TARGET%self.__dict__ )
+                    re.sub('\n+', '\n', RULES_BINARY_INDEP_TARGET%self.__dict__))
             else:
                 self.binary_target_lines = ( \
                     RULES_BINARY_TARGET%self.__dict__ + \
-                    RULES_BINARY_INDEP_TARGET%self.__dict__ + \
+                    re.sub('\n+', '\n', RULES_BINARY_INDEP_TARGET%self.__dict__) + \
                     RULES_BINARY_ARCH_TARGET%self.__dict__ )
         else:
             self.binary_target_lines = ''
