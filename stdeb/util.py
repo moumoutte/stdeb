@@ -31,6 +31,27 @@ import exceptions
 class CalledProcessError(exceptions.Exception): pass
 class CantSatisfyRequirement(exceptions.Exception): pass
 
+class Rule:
+    def __init__(self, name='', depend='', commands=None):
+        self.name = name
+        self.depend = depend
+        self.commands = commands or []
+
+    def add_command(self, cmd):
+        self.commands.append(cmd)
+
+    def set_depend(self, depend):
+        self.depend = depend
+
+    def __str__(self):
+        final = "%s:%s\n" % (self.name, self.depend)
+        for cmd in self.commands:
+           final+='\t%s\n' % cmd
+        return final
+
+
+
+
 def check_call(*popenargs, **kwargs):
     retcode = subprocess.call(*popenargs, **kwargs)
     if retcode == 0:
@@ -654,6 +675,7 @@ class DebianInfo:
                  guess_conflicts_provides_replaces = False,
                  sdist_dsc_command = None,
                  ):
+        self.rules = []
         if cfg_files is NotGiven: raise ValueError("cfg_files must be supplied")
         if module_name is NotGiven: raise ValueError(
             "module_name must be supplied")
@@ -765,11 +787,12 @@ class DebianInfo:
 
         self.init_files = parse_vals(cfg, module_name, 'INIT-Files')
 
-        self.dh_installinit_indep_line = ''
         if self.init_files:
-            need_custom_binary_target = True
+            override_dh_installinit = Rule(name='override_dh_installinit', depend='')
             for f in self.init_files:
-                self.dh_installinit_indep_line += '\tdh_installinit --name=%s\n' % extract_name(f)
+                override_dh_installinit.add_command('dh_installinit --name=%s' % extract_name(f))
+            self.rules.append(override_dh_installinit)
+
 
         if self.mime_file == '' and self.shared_mime_file == '':
             self.dh_installmime_indep_line = ''
@@ -1154,6 +1177,8 @@ def build_dsc(debinfo,
     rules = RULES_MAIN%debinfo.__dict__
 
     rules = rules.replace('        ','\t')
+    for rule in debinfo.rules:
+        rules += str(rule)
     rules_fname = os.path.join(debian_dir,'rules')
     fd = open( rules_fname, mode='w')
     fd.write(rules)
@@ -1366,7 +1391,6 @@ binary-indep: build
 %(dh_binary_indep_lines)s
 %(dh_installmime_indep_line)s
 %(dh_desktop_indep_line)s
-%(dh_installinit_indep_line)s
 """
 
 PREINST = """#! /bin/sh
