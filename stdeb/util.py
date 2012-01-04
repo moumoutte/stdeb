@@ -1184,16 +1184,19 @@ def build_dsc(debinfo,
         rules += str(rule)
 
     rules_fname = os.path.join(debian_dir,'rules')
-    if os.path.exists(rules_fname):
-        template = open(rules_fname, mode='r').read()
+    crules_file = os.path.join(os.getcwd(), 'debian/rules')
+    print os.getcwd()
+    if os.path.exists(crules_file):
+        template = open(crules_file, mode='r').read()
         if '#RULES#\n' in template:
             template = template.replace('#RULES#\n', rules, 1)
             rules = template
         else:
             rules += template
 
+
         if not (rules[:3] == '#!/'):
-            rules = RULES_MAIN_SHEBANG + rules
+            rules = RULES_SHEBANG + rules
 
     fd = open( rules_fname, mode='w')
     fd.write(rules)
