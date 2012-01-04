@@ -714,9 +714,8 @@ class DebianInfo:
                 if value:
                     if not cfg.has_section(module_name):
                         cfg.add_section(module_name)
-		    if list(value) == value:
-			    tmp_val = ', '.join(value)
-			    value = tmp_val
+                    if list(value) == value:
+                        value = ', '.join(value)
 
                     cfg.set(module_name, opt_name, value)
 
