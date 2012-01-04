@@ -149,6 +149,7 @@ stdeb_cfg_options = [
     ('shared-mime-file=',None,'shared MIME file'),
     ('setup-env-vars=',None,'environment variables passed to setup.py'),
     ('udev-rules=',None,'file with rules to install to udev'),
+    ('pre-depends=', None, 'Pre-Depends')
     ]
 
 stdeb_cmd_bool_opts = [
@@ -813,10 +814,22 @@ class DebianInfo:
                 '%s usr/share/applications'%mime_desktop_file)
 
         depends.extend(parse_vals(cfg,module_name,'Depends') )
-	if install_requires is not None and len(install_requires):
+
+        self.pre_depends = parse_vals(cfg, module_name, 'Pre-Depends')
+        self.str_pre_depends = ' '.join(self.pre_depends)
+
+        if install_requires is not None and len(install_requires):
+
             depends.extend(get_deb_depends_from_setuptools_requires(
                 install_requires))
-        self.depends = ', '.join(depends)
+            if len(self.str_pre_depends):
+                for deps in depends:
+                    if deps in self.str_pre_depends:
+                        depends.remove(deps)
+                self.str_pre_depends = 'Pre-Depends: ' + self.str_pre_depends + '\n'
+            self.depends = ', '.join(depends)
+
+
 
         self.debian_section = parse_val(cfg,module_name,'Section')
 
@@ -1364,7 +1377,7 @@ Standards-Version: 3.8.4
 %(source_stanza_extras)s
 Package: %(package)s
 Architecture: %(architecture)s
-Depends: %(depends)s
+%(str_pre_depends)sDepends: %(depends)s
 %(package_stanza_extras)sDescription: %(description)s
 %(long_description)s
 """
