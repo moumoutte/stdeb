@@ -1198,7 +1198,6 @@ def build_dsc(debinfo,
 
     rules_fname = os.path.join(debian_dir,'rules')
     crules_file = os.path.join(os.getcwd(), 'debian/rules')
-    print os.getcwd()
     if os.path.exists(crules_file):
         template = open(crules_file, mode='r').read()
         if '#RULES#\n' in template:
